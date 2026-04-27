@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <h2 class="mb-4"><i class="fas fa-user-circle"></i> {% if session.lang == 'en' %}User Profile{% else %}Профиль пользователя{% endif %}</h2>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; text-align: center;">
+                <div class="avatar-container">
+                    {% if user.avatar and user.avatar != '/static/avatars/default-avatar.png' %}
+                        <img src="{{ user.avatar }}" style="width: 128px; height: 128px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); margin-bottom: 1rem;" 
+                             onerror="this.onerror=null; this.style.display='none'; this.nextSibling.style.display='flex';">
+                        <div style="width: 128px; height: 128px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: none; align-items: center; justify-content: center; margin: 0 auto 1rem auto; color: white; font-weight: bold; font-size: 48px;">
+                            {{ user.username[0].upper() if user.username else 'U' }}
+                        </div>
+                    {% else %}
+                        <div style="width: 128px; height: 128px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; color: white; font-weight: bold; font-size: 48px;">
+                            {{ user.username[0].upper() if user.username else 'U' }}
+                        </div>
+                    {% endif %}
+                    <h5>{{ user.username }}</h5>
+                    <p class="text-muted">{{ user.email }}</p>
+                </div>
+                
+                <form method="POST" enctype="multipart/form-data" class="mt-3">
+                    <input type="hidden" name="action" value="update_avatar">
+                    <div class="mb-2">
+                        <label for="avatar-input" class="avatar-file-label">
+                            <i class="fas fa-camera"></i> {% if session.lang == 'en' %}Choose file{% else %}Выбрать фото{% endif %}
+                        </label>
+                        <input type="file" name="avatar" id="avatar-input" accept="image/*" style="display: none;" onchange="this.nextElementSibling.textContent = this.files[0] ? this.files[0].name : '{% if session.lang == "en" %}No file chosen{% else %}Файл не выбран{% endif %}'">
+                        <span class="avatar-file-name" style="display: block; font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">
+                            {% if session.lang == 'en' %}No file chosen{% else %}Файл не выбран{% endif %}
+                        </span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="fas fa-upload"></i> {% if session.lang == 'en' %}Change Avatar{% else %}Сменить аватар{% endif %}
+                    </button>
+                </form>
+                
+                <form method="POST" class="mt-2">
+                    <input type="hidden" name="action" value="delete_avatar">
+                    <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('{% if session.lang == 'en' %}Delete avatar?{% else %}Удалить аватар?{% endif %}')">
+                        <i class="fas fa-trash"></i> {% if session.lang == 'en' %}Delete Avatar{% else %}Удалить аватар{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card mb-4" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem;">
+                <h4><i class="fas fa-lock"></i> {% if session.lang == 'en' %}Change Password{% else %}Смена пароля{% endif %}</h4>
+                <form method="POST">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="mb-3">
+                        <label class="form-label">{% if session.lang == 'en' %}Current Password{% else %}Текущий пароль{% endif %}</label>
+                        <input type="password" name="old_password" class="form-control" value="" autocomplete="off" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% if session.lang == 'en' %}New Password{% else %}Новый пароль{% endif %}</label>
+                        <input type="password" name="new_password" class="form-control" value="" autocomplete="off" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% if session.lang == 'en' %}Confirm New Password{% else %}Подтвердите пароль{% endif %}</label>
+                        <input type="password" name="confirm_password" class="form-control" value="" autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% if session.lang == 'en' %}Change Password{% else %}Сменить пароль{% endif %}
+                    </button>
+                </form>
+            </div>
+            
+            <div class="card" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem;">
+                <h4><i class="fas fa-sliders-h"></i> {% if session.lang == 'en' %}Settings{% else %}Настройки{% endif %}</h4>
+                <form method="POST">
+                    <input type="hidden" name="action" value="update_settings">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{% if session.lang == 'en' %}Currency{% else %}Валюта{% endif %}</label>
+                        <select name="currency" class="form-select">
+                            <option value="RUB" {% if user.currency == 'RUB' %}selected{% endif %}>🇷🇺 RUB (₽)</option>
+                            <option value="USD" {% if user.currency == 'USD' %}selected{% endif %}>🇺🇸 USD ($)</option>
+                            <option value="EUR" {% if user.currency == 'EUR' %}selected{% endif %}>🇪🇺 EUR (€)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="notifications" class="form-check-input" id="notifications" {% if user.notifications_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="notifications">
+                            <i class="fas fa-bell"></i> {% if session.lang == 'en' %}Enable notifications about upcoming payments{% else %}Включить уведомления о предстоящих платежах{% endif %}
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% if session.lang == 'en' %}Save Settings{% else %}Сохранить настройки{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('avatar-input')?.addEventListener('change', function(e) {
+        const fileNameSpan = this.nextElementSibling;
+        if (fileNameSpan) {
+            fileNameSpan.textContent = this.files[0] ? this.files[0].name : '{% if session.lang == "en" %}No file chosen{% else %}Файл не выбран{% endif %}';
+        }
+    });
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow);
+}
+.avatar-file-label {
+    display: inline-block;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+    width: 100%;
+    text-align: center;
+}
+.avatar-file-label:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary);
+}
+.avatar-file-name {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    word-break: break-all;
+}
+.w-100 {
+    width: 100%;
+}
+</style>
+{% endblock %}

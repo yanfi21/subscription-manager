@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="summary-card">
+    <div style="text-align: center; margin-bottom: 0.5rem;">
+        <div style="font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.75rem; letter-spacing: 0.5px;">
+            {% if session.lang == 'en' %}You spend on subscriptions{% else %}Вы тратите на подписки{% endif %}
+        </div>
+        <div style="display: flex; justify-content: center; gap: 3rem;">
+            <div style="text-align: center;">
+                <small style="display: block; font-size: 0.7rem; opacity: 0.8; color: white;">{% if session.lang == 'en' %}Monthly{% else %}В месяц{% endif %}</small>
+                <strong style="font-size: 1.6rem; font-weight: 700; color: white;">{{ total_monthly }} {{ symbol }}</strong>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.3);"></div>
+            <div style="text-align: center;">
+                <small style="display: block; font-size: 0.7rem; opacity: 0.8; color: white;">{% if session.lang == 'en' %}Yearly{% else %}В год{% endif %}</small>
+                <strong style="font-size: 1.6rem; font-weight: 700; color: white;">{{ total_yearly }} {{ symbol }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <h2><i class="fas fa-list-check"></i> {% if session.lang == 'en' %}My Subscriptions{% else %}Мои подписки{% endif %}</h2>
+    <a href="/export-excel" class="btn btn-success">
+        <i class="fas fa-file-csv"></i> {% if session.lang == 'en' %}Export Excel{% else %}Экспорт Excel{% endif %}
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="{% if session.lang == 'en' %}Search by name...{% else %}Поиск по названию...{% endif %}">
+    </div>
+    <div class="col-md-3">
+        <select id="categoryFilter" class="form-select">
+            <option value="">{% if session.lang == 'en' %}All categories{% else %}Все категории{% endif %}</option>
+            {% set unique_categories = [] %}
+            {% for sub in subscriptions %}
+                {% if sub.category not in unique_categories %}
+                    {% set _ = unique_categories.append(sub.category) %}
+                    <option value="{{ sub.category }}">{{ sub.category }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select id="statusFilter" class="form-select">
+            <option value="">{% if session.lang == 'en' %}All statuses{% else %}Все статусы{% endif %}</option>
+            <option value="active">{% if session.lang == 'en' %}Active{% else %}Активна{% endif %}</option>
+            <option value="paused">{% if session.lang == 'en' %}Paused{% else %}Приостановлена{% endif %}</option>
+            <option value="canceled">{% if session.lang == 'en' %}Canceled{% else %}Отменена{% endif %}</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button id="resetFilters" class="btn btn-secondary w-100">
+            <i class="fas fa-undo"></i> {% if session.lang == 'en' %}Reset{% else %}Сбросить{% endif %}
+        </button>
+    </div>
+</div>
+
+<div id="subscriptions-grid" class="row">
+    {% if subscriptions %}
+        {% for sub in subscriptions %}
+        <div class="col-md-6 col-lg-4 subscription-item" data-id="{{ sub.id }}" data-name="{{ sub.name.lower() }}" data-category="{{ sub.category }}" data-status="{{ sub.status }}">
+            <div class="subscription-card" data-id="{{ sub.id }}">
+                <div class="drag-handle" style="cursor: grab; text-align: center; margin-bottom: 10px; color: var(--text-muted);">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="subscription-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <h5 class="subscription-name">{{ sub.name }}</h5>
+                        <span class="subscription-category">{{ sub.category }}</span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="card-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
+                            <li><a class="dropdown-item" href="/edit/{{ sub.id }}"><i class="fas fa-edit"></i> {% if session.lang == 'en' %}Edit{% else %}Редактировать{% endif %}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger delete-btn" data-name="{{ sub.name }}" data-id="{{ sub.id }}" href="#"><i class="fas fa-trash"></i> {% if session.lang == 'en' %}Delete{% else %}Удалить{% endif %}</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="subscription-price">
+                    <span class="price-value">{{ sub.cost }} {{ symbol }}</span>
+                    <span class="price-period">
+                        / {% if sub.period == 'month' %}{% if session.lang == 'en' %}month{% else %}месяц{% endif %}
+                           {% elif sub.period == 'year' %}{% if session.lang == 'en' %}year{% else %}год{% endif %}
+                           {% else %}{% if session.lang == 'en' %}week{% else %}неделя{% endif %}{% endif %}
+                    </span>
+                </div>
+                
+                <div class="subscription-yearly">
+                    <i class="fas fa-calendar-alt"></i>
+                    {% set yearly = sub.cost * 12 if sub.period == 'month' else sub.cost if sub.period == 'year' else sub.cost * 52 %}
+                    {% if session.lang == 'en' %}Yearly: {% else %}В год: {% endif %}<strong>{{ yearly|round(2) }} {{ symbol }}</strong>
+                </div>
+                
+                <div class="subscription-progress">
+                    <div class="progress-bar-custom" style="width: 100%;"></div>
+                </div>
+                
+                <div class="subscription-footer">
+                    <div class="payment-date">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>{{ sub.next_payment_date }}</span>
+                    </div>
+                    <div class="status-badge status-{{ sub.status }}">
+                        {% if sub.status == 'active' %}
+                            {% if session.lang == 'en' %}Active{% else %}Активна{% endif %}
+                        {% elif sub.status == 'paused' %}
+                            {% if session.lang == 'en' %}Paused{% else %}Приостановлена{% endif %}
+                        {% else %}
+                            {% if session.lang == 'en' %}Canceled{% else %}Отменена{% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-4x mb-3" style="color: var(--text-muted);"></i>
+            <h4 style="color: var(--text-primary);">{% if session.lang == 'en' %}No subscriptions yet{% else %}Пока нет подписок{% endif %}</h4>
+            <p style="color: var(--text-muted);">{% if session.lang == 'en' %}Click "Add" to start tracking{% else %}Нажмите "Добавить", чтобы начать учёт{% endif %}</p>
+            <a href="/add" class="btn btn-primary mt-2">
+                <i class="fas fa-plus-circle"></i> {% if session.lang == 'en' %}Add subscription{% else %}Добавить подписку{% endif %}
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const grid = document.getElementById('subscriptions-grid');
+    if (grid) {
+        new Sortable(grid, {
+            animation: 300,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            handle: '.drag-handle',
+            onEnd: function() {
+                const order = [];
+                document.querySelectorAll('.subscription-item').forEach((item, index) => {
+                    order.push(item.dataset.id);
+                });
+                localStorage.setItem('subscription_order', JSON.stringify(order));
+            }
+        });
+        
+        const savedOrder = localStorage.getItem('subscription_order');
+        if (savedOrder) {
+            const order = JSON.parse(savedOrder);
+            const items = Array.from(grid.children);
+            items.sort((a, b) => order.indexOf(a.dataset.id) - order.indexOf(b.dataset.id));
+            items.forEach(item => grid.appendChild(item));
+        }
+    }
+    
+    function filterSubscriptions() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        
+        const items = document.querySelectorAll('.subscription-item');
+        let visibleCount = 0;
+        
+        items.forEach(item => {
+            const name = item.dataset.name;
+            const itemCategory = item.dataset.category;
+            const itemStatus = item.dataset.status;
+            
+            let matches = true;
+            if (searchTerm && !name.includes(searchTerm)) matches = false;
+            if (category && itemCategory !== category) matches = false;
+            if (status && itemStatus !== status) matches = false;
+            
+            if (matches) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        const noResultsMsg = document.getElementById('no-results-message');
+        if (visibleCount === 0 && items.length > 0) {
+            if (!noResultsMsg) {
+                const msg = document.createElement('div');
+                msg.id = 'no-results-message';
+                msg.className = 'col-12 text-center py-5';
+                msg.innerHTML = `<i class="fas fa-search fa-3x mb-3" style="color: var(--text-muted);"></i><h4 style="color: var(--text-primary);">{% if session.lang == 'en' %}No subscriptions found{% else %}Ничего не найдено{% endif %}</h4>`;
+                grid.appendChild(msg);
+            }
+        } else if (noResultsMsg) {
+            noResultsMsg.remove();
+        }
+    }
+    
+    document.getElementById('searchInput').addEventListener('input', filterSubscriptions);
+    document.getElementById('categoryFilter').addEventListener('change', filterSubscriptions);
+    document.getElementById('statusFilter').addEventListener('change', filterSubscriptions);
+    document.getElementById('resetFilters').addEventListener('click', function() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('categoryFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        filterSubscriptions();
+    });
+    
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            const item = this.closest('.subscription-item');
+            const lang = '{{ session.lang }}';
+            
+            if (confirm(lang === 'en' ? `Delete ${name}?` : `Удалить ${name}?`)) {
+                if (item) {
+                    item.style.animation = 'fadeOut 0.3s ease forwards';
+                    setTimeout(async () => {
+                        const response = await fetch(`/delete/${id}`);
+                        if (response.ok) {
+                            item.remove();
+                            setTimeout(() => location.reload(), 500);
+                        }
+                    }, 300);
+                }
+            }
+        });
+    });
+    
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'data-theme') {
+                location.reload();
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+});
+</script>
+
+<style>
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+
+.sortable-ghost { opacity: 0.4; background: var(--primary); }
+.sortable-drag { opacity: 0.8; transform: rotate(2deg); }
+
+.subscription-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.subscription-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow);
+}
+
+.subscription-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.subscription-icon i {
+    font-size: 1.25rem;
+    color: var(--primary);
+}
+
+.subscription-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.subscription-category {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.card-menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.card-menu-btn:hover {
+    background: var(--bg-primary);
+    color: var(--primary);
+}
+
+.subscription-price {
+    margin: 15px 0 8px 0;
+}
+
+.price-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.price-period {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: 4px;
+}
+
+.subscription-yearly {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.subscription-yearly i {
+    margin-right: 6px;
+    font-size: 0.7rem;
+}
+
+.subscription-progress {
+    height: 3px;
+    background: var(--border-color);
+    border-radius: 3px;
+    margin: 12px 0;
+    overflow: hidden;
+}
+
+.progress-bar-custom {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 3px;
+    width: 100%;
+}
+
+.subscription-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.payment-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.payment-date i {
+    font-size: 0.7rem;
+}
+
+.status-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.status-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.status-paused {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.status-canceled {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+</style>
+{% endblock %}

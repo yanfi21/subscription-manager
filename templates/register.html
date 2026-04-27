@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Менеджер подписок</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(16px);
+            border-radius: 28px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo { text-align: center; margin-bottom: 2rem; }
+        .logo i { font-size: 3rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .logo h2 { margin-top: 0.5rem; color: #1e1b4b; font-weight: 700; }
+        .form-control { 
+            border-radius: 14px; 
+            padding: 12px 16px; 
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            background: white;
+        }
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 14px;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4); }
+        .link-custom { color: #6366f1; text-decoration: none; }
+        .link-custom:hover { text-decoration: underline; }
+        .password-strength { height: 4px; border-radius: 2px; margin-top: 8px; transition: all 0.3s; }
+        .strength-weak { background: #ef4444; width: 33%; }
+        .strength-medium { background: #f59e0b; width: 66%; }
+        .strength-strong { background: #10b981; width: 100%; }
+        .strength-text { font-size: 0.7rem; margin-top: 4px; color: #6c757d; }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .toast-notification {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            animation: slideInRight 0.3s ease forwards;
+            min-width: 280px;
+        }
+        .toast-success { border-left-color: #10b981; }
+        .toast-error { border-left-color: #ef4444; }
+        .toast-info { border-left-color: #6366f1; }
+        .toast-warning { border-left-color: #f59e0b; }
+        .toast-icon i { font-size: 1.2rem; }
+        .toast-success .toast-icon i { color: #10b981; }
+        .toast-error .toast-icon i { color: #ef4444; }
+        .toast-info .toast-icon i { color: #6366f1; }
+        .toast-warning .toast-icon i { color: #f59e0b; }
+        .toast-message { flex: 1; color: #1e1b4b; font-size: 0.9rem; }
+        .toast-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d; }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div id="toast-container" class="toast-container"></div>
+    
+    <div class="register-card">
+        <div class="logo">
+            <i class="fas fa-user-plus"></i>
+            <h2>Регистрация</h2>
+        </div>
+        
+        <form method="POST" id="registerForm">
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" placeholder="Имя пользователя" required autocomplete="off" id="username">
+                <small class="text-muted" id="usernameHint" style="font-size: 0.7rem;"></small>
+            </div>
+            <div class="mb-3">
+                <input type="email" name="email" class="form-control" placeholder="Email" required id="email">
+            </div>
+            <div class="mb-3">
+                <input type="password" name="password" class="form-control" placeholder="Пароль" required id="password">
+                <div class="password-strength" id="strengthBar"></div>
+                <div class="strength-text" id="strengthText"></div>
+            </div>
+            <div class="mb-3">
+                <input type="password" name="password2" class="form-control" placeholder="Повторите пароль" required id="password2">
+                <small class="text-muted" id="matchHint" style="font-size: 0.7rem;"></small>
+            </div>
+            <button type="submit" class="btn-register" id="registerBtn">
+                <i class="fas fa-user-plus"></i> Зарегистрироваться
+            </button>
+        </form>
+        
+        <div class="text-center mt-4">
+            <small>Уже есть аккаунт? <a href="/login" class="link-custom">Войти</a></small>
+        </div>
+    </div>
+
+    <script>
+        function showToast(message, type) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                </div>
+                <div class="toast-message">${escapeHtml(message)}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOutRight 0.3s ease forwards';
+                    setTimeout(() => {
+                        if (toast.parentElement) toast.remove();
+                    }, 300);
+                }
+            }, 4000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        fetch('/get-flash-messages')
+            .then(response => response.json())
+            .then(messages => {
+                messages.forEach(msg => {
+                    let type = 'info';
+                    if (msg.category === 'success') type = 'success';
+                    else if (msg.category === 'danger') type = 'error';
+                    else if (msg.category === 'warning') type = 'warning';
+                    showToast(msg.message, type);
+                });
+            })
+            .catch(err => console.log('Flash messages error:', err));
+        
+        const passwordInput = document.getElementById('password');
+        const password2Input = document.getElementById('password2');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        const matchHint = document.getElementById('matchHint');
+        const usernameInput = document.getElementById('username');
+        const usernameHint = document.getElementById('usernameHint');
+        
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            if (password.length >= 6) strength++;
+            if (password.match(/[a-z]/)) strength++;
+            if (password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            
+            strengthBar.className = 'password-strength';
+            if (password.length === 0) {
+                strengthBar.style.width = '0';
+                strengthText.textContent = '';
+                return;
+            }
+            
+            if (strength <= 2) {
+                strengthBar.classList.add('strength-weak');
+                strengthText.textContent = 'Слабый пароль';
+            } else if (strength <= 3) {
+                strengthBar.classList.add('strength-medium');
+                strengthText.textContent = 'Средний пароль';
+            } else {
+                strengthBar.classList.add('strength-strong');
+                strengthText.textContent = 'Сильный пароль';
+            }
+        }
+        
+        function checkPasswordMatch() {
+            if (password2Input.value.length === 0) {
+                matchHint.textContent = '';
+                return;
+            }
+            if (passwordInput.value === password2Input.value) {
+                matchHint.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981;"></i> Пароли совпадают';
+            } else {
+                matchHint.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> Пароли не совпадают';
+            }
+        }
+        
+        function checkUsername() {
+            const username = usernameInput.value;
+            if (username.length < 3 && username.length > 0) {
+                usernameHint.innerHTML = '<i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> Минимум 3 символа';
+            } else if (username.length >= 3) {
+                usernameHint.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981;"></i> Доступно';
+            } else {
+                usernameHint.innerHTML = '';
+            }
+        }
+        
+        passwordInput.addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            checkPasswordMatch();
+        });
+        
+        password2Input.addEventListener('input', checkPasswordMatch);
+        usernameInput.addEventListener('input', checkUsername);
+        
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('registerBtn');
+            const password = passwordInput.value;
+            const password2 = password2Input.value;
+            
+            if (password !== password2) {
+                e.preventDefault();
+                showToast('Пароли не совпадают', 'error');
+                return;
+            }
+            
+            if (password.length < 4) {
+                e.preventDefault();
+                showToast('Пароль должен быть не менее 4 символов', 'error');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Регистрация...';
+        });
+    </script>
+</body>
+</html>

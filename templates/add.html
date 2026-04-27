@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2><i class="fas fa-plus-circle"></i> {% if session.lang == 'en' %}Add Subscription{% else %}Добавить подписку{% endif %}</h2>
+
+<form method="POST">
+    <div class="mb-3">
+        <label class="form-label">{% if session.lang == 'en' %}Service name{% else %}Название сервиса{% endif %}</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">{% if session.lang == 'en' %}Cost (₽){% else %}Стоимость (₽){% endif %}</label>
+        <input type="number" step="0.01" name="cost" class="form-control" required>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">{% if session.lang == 'en' %}Period{% else %}Периодичность{% endif %}</label>
+        <select name="period" class="form-select">
+            <option value="month">{% if session.lang == 'en' %}Monthly{% else %}Каждый месяц{% endif %}</option>
+            <option value="year">{% if session.lang == 'en' %}Yearly{% else %}Раз в год{% endif %}</option>
+            <option value="week">{% if session.lang == 'en' %}Weekly{% else %}Каждую неделю{% endif %}</option>
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">{% if session.lang == 'en' %}Next payment date{% else %}Дата следующего списания{% endif %}</label>
+        <input type="date" name="next_payment_date" class="form-control" required>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">{% if session.lang == 'en' %}Category{% else %}Категория{% endif %}</label>
+        <input type="text" name="category" class="form-control" placeholder="{% if session.lang == 'en' %}Entertainment, Software, Education...{% else %}Развлечения, Софт, Образование...{% endif %}">
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">{% if session.lang == 'en' %}Status{% else %}Статус{% endif %}</label>
+        <select name="status" class="form-select">
+            <option value="active">{% if session.lang == 'en' %}Active{% else %}Активна{% endif %}</option>
+            <option value="paused">{% if session.lang == 'en' %}Paused{% else %}Приостановлена{% endif %}</option>
+            <option value="canceled">{% if session.lang == 'en' %}Canceled{% else %}Отменена{% endif %}</option>
+        </select>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">{% if session.lang == 'en' %}Save{% else %}Сохранить{% endif %}</button>
+    <a href="/" class="btn btn-secondary">{% if session.lang == 'en' %}Cancel{% else %}Отмена{% endif %}</a>
+</form>
+{% endblock %}

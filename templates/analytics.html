@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="analytics-header">
+    <h2><i class="fas fa-chart-line"></i> {% if session.lang == 'en' %}Analytics{% else %}Аналитика{% endif %}</h2>
+    <p class="text-muted">{% if session.lang == 'en' %}Expense analysis by category and top subscriptions{% else %}Анализ расходов по категориям и топ подписок{% endif %}</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <h4><i class="fas fa-chart-pie"></i> {% if session.lang == 'en' %}Expenses by Category{% else %}Расходы по категориям{% endif %}</h4>
+            <canvas id="categoryChart" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="chart-card">
+            <h4><i class="fas fa-chart-bar"></i> {% if session.lang == 'en' %}Top 5 Expensive{% else %}Топ 5 дорогих{% endif %}</h4>
+            <canvas id="topChart" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categories = {{ categories|tojson }};
+    const topSubscriptions = {{ top_subscriptions|tojson }};
+    const symbol = '{{ symbol }}';
+    const lang = '{{ session.lang }}';
+    
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#f0e9ff' : '#1e1b4b';
+    const gridColor = isDark ? '#2d1b4e' : '#e9d5ff';
+    
+    if (categories && categories.length > 0) {
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categories.map(c => c.name),
+                datasets: [{
+                    data: categories.map(c => c.total),
+                    backgroundColor: ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#6d28d9', '#4c1d95', '#2e1065', '#818cf8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: textColor, font: { size: 11 } } },
+                    tooltip: { callbacks: { label: function(context) { return `${context.label}: ${context.raw} ${symbol}`; } } }
+                }
+            }
+        });
+    }
+    
+    if (topSubscriptions && topSubscriptions.length > 0) {
+        const topCtx = document.getElementById('topChart').getContext('2d');
+        new Chart(topCtx, {
+            type: 'bar',
+            data: {
+                labels: topSubscriptions.map(t => t.name.length > 15 ? t.name.substring(0, 12) + '...' : t.name),
+                datasets: [{
+                    label: lang === 'en' ? 'Cost per month (' + symbol + ')' : 'Стоимость в месяц (' + symbol + ')',
+                    data: topSubscriptions.map(t => t.cost),
+                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } },
+                    x: { ticks: { color: textColor }, grid: { display: false } }
+                }
+            }
+        });
+    }
+    
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'data-theme') {
+                location.reload();
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+});
+</script>
+
+<style>
+.analytics-header {
+    margin-bottom: 1.5rem;
+}
+.analytics-header h2 {
+    color: var(--text-primary);
+}
+.chart-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+.chart-card h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+.chart-card h4 i {
+    margin-right: 0.5rem;
+    color: var(--primary);
+}
+</style>
+{% endblock %}

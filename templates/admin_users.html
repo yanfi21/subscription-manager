@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 style="color: var(--text-primary);"><i class="fas fa-users"></i> {% if session.lang == 'en' %}User Management{% else %}Управление пользователями{% endif %}</h2>
+
+<div class="table-responsive mt-4">
+    <table class="table" style="color: var(--text-primary);">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>{% if session.lang == 'en' %}Username{% else %}Имя{% endif %}</th>
+                <th>Email</th>
+                <th>{% if session.lang == 'en' %}Admin{% else %}Админ{% endif %}</th>
+                <th>{% if session.lang == 'en' %}Subscriptions{% else %}Подписок{% endif %}</th>
+                <th>{% if session.lang == 'en' %}Registered{% else %}Зарегистрирован{% endif %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr style="color: var(--text-primary);">
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{% if user.is_admin %}✅{% else %}❌{% endif %}</td>
+                <td>{{ user.subscriptions|length }}</td>
+                <td>{{ user.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="calendar-container">
+    <div class="calendar-nav">
+        <a href="{{ url_for('calendar_view', year=year, month=month-1) }}" class="cal-nav-btn">
+            <i class="fas fa-chevron-left"></i> {% if session.lang == 'en' %}Prev{% else %}Прошлый{% endif %}
+        </a>
+        <div class="calendar-title">
+            <i class="fas fa-calendar-alt"></i> {{ month_name }} {{ year }}
+        </div>
+        <a href="{{ url_for('calendar_view', year=year, month=month+1) }}" class="cal-nav-btn">
+            {% if session.lang == 'en' %}Next{% else %}Следующий{% endif %} <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="calendar-weekdays">
+            {% for day in weekday_names %}
+                <span>{{ day }}</span>
+            {% endfor %}
+        </div>
+        
+        {% for week in calendar %}
+        <div class="calendar-week">
+            {% for day in week %}
+            <div class="calendar-day 
+                        {% if day == 0 %}empty
+                        {% elif day == today.day and today.month == month and today.year == year %}today
+                        {% endif %}
+                        {% if day in payments_by_day and day != 0 %}has-payment{% endif %}">
+                {% if day != 0 %}
+                    <div class="day-num">{{ day }}</div>
+                    {% if day in payments_by_day %}
+                        <div class="day-payments-list">
+                            {% for sub in payments_by_day[day] %}
+                            <div class="mini-payment" title="{{ sub.name }} - {{ sub.cost }} ₽">
+                                <i class="fas fa-receipt"></i> 
+                                <span>{{ sub.name[:12] }}{% if sub.name|length > 12 %}…{% endif %}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
