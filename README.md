@@ -58,31 +58,7 @@
 
    Перейдите по адресу: http://127.0.0.1:5000
 
-### 🎯 Структура проекта
-
-subscription-manager/
-│
-├── app.py                 # Главный файл приложения (маршруты и логика)
-├── models.py              # Модели базы данных (SQLAlchemy)
-├── requirements.txt       # Список зависимостей Python
-├── .gitignore            # Игнорируемые Git файлы
-├── README.md             # Документация
-│
-├── templates/            # HTML-шаблоны
-│   ├── base.html        # Базовый шаблон
-│   ├── index.html       # Главная страница
-│   ├── add_subscription.html
-│   └── ...
-│
-├── static/               # Статические файлы
-│   ├── css/             # Стили
-│   ├── js/              # Скрипты
-│   └── images/          # Изображения
-│
-├── instance/             # Локальная БД (не в Git)
-│   └── database.db      # SQLite база данных
-│
-└── __pycache__/         # Кэш Python (не в Git)
+---
 
 ### 🛠 Используемые технологии
 
